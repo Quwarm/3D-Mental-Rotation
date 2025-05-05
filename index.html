@@ -1,0 +1,1375 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3D Mental Rotation Training</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin="anonymous">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"
+    rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-size: 1em;
+    }
+
+    :root {
+      --bg-dark: #1f1f1f;
+      --bg-medium: #2a2a2a;
+      --bg-light: #383838;
+      --text-primary: #e0e0e0;
+      --text-secondary: #a0a0a0;
+      --accent-color: #007bff;
+      --accent-hover: #0056b3;
+      --success-color: #28a745;
+      --success-hover: #218838;
+      --danger-color: #dc3545;
+      --danger-hover: #c82333;
+      --warning-color: #ffc107;
+      --border-color: #444;
+      --border-radius: 6px;
+    }
+
+    body {
+      padding: 15px;
+      text-align: center;
+      font-family: Arial, sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-primary);
+    }
+
+    canvas {
+      user-select: none;
+      -moz-user-select: none;
+      -webkit-user-select: none;
+      -ms-user-select: none;
+    }
+
+    .container {
+      padding: 25px;
+      max-width: 1100px;
+      width: 100%;
+      margin: 0 auto;
+      display: block;
+      text-align: center;
+      background: var(--bg-medium);
+      border-radius: var(--border-radius);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .container * {
+      margin: 5px auto;
+    }
+
+    .with-rounded-border {
+      border-radius: 10px;
+      padding: 2px;
+      border-width: 2px;
+      border-style: solid;
+      border-color: rgb(90, 90, 90);
+    }
+
+    hr {
+      height: 1px;
+      border: 0;
+      background-color: rgb(90, 90, 90);
+    }
+
+    h1 {
+      font-size: 1.6em;
+      color: var(--text-primary);
+    }
+
+    h2 {
+      font-size: 1.3em;
+      color: var(--text-secondary);
+    }
+
+    h3 {
+      font-size: 1.1em;
+      color: var(--text-secondary);
+    }
+
+    a {
+      text-decoration: none;
+      font-weight: bold;
+      color: #555;
+    }
+
+    a:hover {
+      color: #aaa;
+    }
+
+    label {
+      text-align: center;
+      display: block;
+      color: var(--text-secondary);
+    }
+
+    label > span {
+      display: block;
+    }
+
+    select, input {
+      vertical-align: middle;
+      text-align: center;
+      width: 100%;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select {
+      display: block;
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+      background: var(--bg-light);
+      color: var(--text-primary);
+      padding-top: 7px;
+      padding-bottom: 7px;
+      font-family: inherit;
+    }
+
+    input[type="checkbox"],
+    input[type="radio"] {
+      transform: scale(1.3);
+      margin: 0;
+    }
+
+    button {
+      font-family: inherit;
+      padding: 10px 15px;
+      border: 1px solid transparent;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    button:active {
+      opacity: 0.8;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+    
+    .button-group button {
+      display: inline-block;
+    }
+
+    .startButton {
+      background-color: var(--success-color);
+      color: #fff;
+    }
+
+    .startButton:hover:not(:disabled) {
+      background-color: var(--success-hover);
+    }
+
+    #stopButton {
+      background-color: var(--danger-color);
+      color: #fff;
+      margin: 0 auto;
+    }
+
+    #stopButton:hover:not(:disabled) {
+      background-color: var(--danger-hover);
+    }
+
+    #submitAnswerButton {
+      background-color: var(--accent-color);
+      color: #fff;
+    }
+
+    #submitAnswerButton:hover:not(:disabled) {
+      background-color: var(--accent-hover);
+    }
+
+    #defaultSettingsButton, #resetAllButton {
+      background-color: var(--bg-light);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+    }
+
+    #defaultSettingsButton:hover:not(:disabled),
+    #resetAllButton:hover:not(:disabled) {
+      background-color: #454545;
+      border-color: #555;
+    }
+
+    #statsDisplay {
+      background-color: var(--bg-light);
+    }
+
+    #statsDisplay p {
+      color: var(--text-secondary);
+    }
+
+    #statsDisplay p span {
+      color: var(--text-primary);
+    }
+
+    #historyList {
+      list-style: none;
+      max-height: 180px;
+      overflow-y: auto;
+      text-align: left;
+    }
+
+    #historyList li {
+      color: var(--text-secondary);
+      padding: 10px 0;
+    }
+
+    #historyList li:first-child {
+      padding-top: 0 !important;
+    }
+
+    #game {
+      width: 100%;
+    }
+
+    #game-top-bar {
+      width: 100%;
+      border-radius: var(--border-radius);
+    }
+
+    #game-top-bar > div,
+    #game-top-bar > button {
+      display: block;
+    }
+
+    #status, #time {
+      color: var(--text-primary);
+    }
+
+    #task {
+      width: 100%;
+      height: 400px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+      background-color: var(--bg-dark);
+      overflow: hidden;
+      margin: 0 auto;
+    }
+
+    #task canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    #answers {
+      width: 100%;
+      text-align: center;
+    }
+
+    .answer-canvas-container {
+      width: 400px;
+      height: 400px;
+      display: inline-block;
+      vertical-align: top;
+      border: 2px solid var(--border-color);
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      background-color: var(--bg-dark);
+      overflow: hidden;
+      margin: 5px;
+    }
+
+    .answer-canvas-container:hover {
+      border-color: var(--accent-color);
+    }
+
+    .answer-canvas-container.selected {
+      border-color: var(--success-color);
+      border-width: 3px;
+    }
+
+    .answer-canvas-container canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    #feedback {
+      font-size: 1.1em;
+      text-align: center;
+      width: 100%;
+    }
+
+    .feedback-correct {
+      color: var(--success-color);
+    }
+
+    .feedback-incorrect {
+      color: var(--danger-color);
+    }
+
+    .feedback-timeout {
+      color: var(--warning-color);
+    }
+
+    .highlight-correct {
+      border: 3px solid var(--success-color) !important;
+    }
+
+    .highlight-incorrect {
+      border: 3px solid var(--danger-color) !important;
+    }
+
+    @media (max-width: 840px) {
+      body {
+        padding: 10px;
+      }
+
+      .container {
+        padding: 15px;
+      }
+
+      h1 {
+        font-size: 1.4em;
+      }
+      
+      #task {
+        width: 100%;
+      }
+
+      button {
+        width: 100%;
+      }
+
+      .answer-canvas-container {
+        width: 100%;
+        margin: 20px 0;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>3D Mental Rotation</h1>
+
+    <div id="gameIntro">
+
+      <div class="with-rounded-border">
+        <h2>Training</h2>
+        <button class="startButton" mode="standard">Standard Mode</button>
+        <button class="startButton" mode="rounds">Round Timeout Mode</button>
+        <button class="startButton" mode="round">Rounds Timeout Mode</button>
+        <button class="startButton" mode="infinite">Infinite Mode</button>
+      </div>
+
+      <!-- <div class="with-rounded-border">
+        <h3>Testing</h3>
+        <button class="startButton" mode="testing">Test</button>
+      </div> -->
+
+      <div id="settings" class="with-rounded-border">
+        <h2>Settings</h2>
+        <label>
+          <span>Number of Cubes:</span>
+          <input type="number" id="cubeCount" min="3" max="20" value="5">
+        </label>
+        <label>
+          <span>Complexity:</span>
+          <input type="number" id="complexity" min="0" max="100" value="0">
+        </label>
+        <label>
+          <span>Increase difficulty every N consecutive successful rounds:</span>
+          <input type="number" id="autoModeRounds" min="0" max="1000" value="3">
+        </label>
+        <label>
+          <span>Answer Choices:</span>
+          <input type="number" id="answerChoices" min="2" max="8" value="4">
+        </label>
+        <label>
+          <span>Seconds per Round:</span>
+          <input type="number" id="secondsPerRound" min="0" max="120" value="30">
+        </label>
+        <label>
+          <span>Seconds per Game:</span>
+          <input type="number" id="secondsPerAllRounds" min="0" value="0">
+        </label>
+        <label>
+          <span>Cube Color:</span>
+          <select id="cubeColor">
+            <option value="gray">Gray</option>
+            <option value="red">Red</option>
+            <option value="green">Green</option>
+            <option value="blue">Blue</option>
+            <option value="cyan">Cyan</option>
+            <option value="magenta">Magenta</option>
+            <option value="yellow">Yellow</option>
+            <option value="orange">Orange</option>
+            <option value="random-per-cube">Random per Cube</option>
+            <option value="random-per-cubes">Random per Set of Cubes</option>
+            <option value="random-per-round">Random per Round</option>
+            <option value="random-per-all-rounds">Random per Game Session</option>
+          </select>
+        </label>
+        <label class="checkbox-label">
+          <span>Auto Rotation:</span>
+          <input type="checkbox" id="autoRotation">
+        </label>
+
+        <div class="button-group">
+          <button id="defaultSettingsButton">Load Default Settings</button>
+          <button id="resetAllButton">Reset Stats & Settings</button>
+        </div>
+
+      </div>
+
+      <div id="statsDisplay" class="with-rounded-border">
+        <h2>Statistics</h2>
+        <p>Best Score: <span id="highScoreStat">N/A</span></p>
+        <p>Average Accuracy: <span id="avgAccuracyStat">N/A</span></p>
+        <br>
+        <h3>History</h3>
+        <ul id="historyList">
+          <li>No games played yet.</li>
+        </ul>
+      </div>
+
+      <a href="https://github.com/Quwarm/3D-Mental-Rotation/" target="_blank">GitHub</a>
+
+    </div>
+
+    <div id="game" class="with-rounded-border">
+      <div id="game-top-bar">
+        <div id="status">Score: 0/0 | Cubes: 5</div>
+        <div id="time">Round: --:-- | Game: --:--</div>
+        <button id="stopButton">Stop</button>
+      </div>
+      <div id="task">
+      </div>
+      <div id="feedback">Select the matching shape below and click Submit.</div>
+      <div id="answers">
+      </div>
+      <button id="submitAnswerButton" disabled>Submit</button>
+    </div>
+  </div>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.176.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.176.0/examples/jsm/"
+      }
+    }
+  </script>
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+    const gameIntro = document.getElementById('gameIntro');
+    const gameArea = document.getElementById('game');
+    const startButtons = [...(document.getElementsByClassName('startButton') ?? [])];
+    const stopButton = document.getElementById('stopButton');
+    const defaultSettingsButton = document.getElementById('defaultSettingsButton');
+    const resetAllButton = document.getElementById('resetAllButton');
+    const cubeCountInput = document.getElementById('cubeCount');
+    const complexityInput = document.getElementById('complexity');
+    const autoModeRoundsInput = document.getElementById('autoModeRounds');
+    const answerChoicesInput = document.getElementById('answerChoices');
+    const secondsPerRoundInput = document.getElementById('secondsPerRound');
+    const secondsPerAllRoundsInput = document.getElementById('secondsPerAllRounds');
+    const autoRotationCheckbox = document.getElementById('autoRotation');
+    const cubeColorSelect = document.getElementById('cubeColor');
+    const statusDisplay = document.getElementById('status');
+    const timeDisplay = document.getElementById('time');
+    const taskCanvasContainer = document.getElementById('task');
+    const answersContainer = document.getElementById('answers');
+    const submitAnswerButton = document.getElementById('submitAnswerButton');
+    const feedbackDisplay = document.getElementById('feedback');
+    const highScoreStat = document.getElementById('highScoreStat');
+    const avgAccuracyStat = document.getElementById('avgAccuracyStat');
+    const historyList = document.getElementById('historyList');
+
+    gameArea.style.display = 'none';
+
+    const settingsNames = {
+      cubeCount: `dmrt_cubeCount`,
+      complexity: `dmrt_complexity`,
+      autoModeRounds: `dmrt_autoModeRounds`,
+      answerChoices: `dmrt_answerChoices`,
+      secondsPerRound: `dmrt_secondsPerRound`,
+      secondsPerAllRounds: `dmrt_secondsPerAllRounds`,
+      autoRotation: `dmrt_autoRotation`,
+      cubeColor: `dmrt_cubeColor`,
+      highScore: `dmrt_highScore`,
+      totalCorrect: `dmrt_totalCorrect`,
+      totalPlayed: `dmrt_totalPlayed`,
+      history: `dmrt_history`,
+    };
+
+    const defaultSettings = {
+      cubeCount: 5,
+      complexity: 0,
+      autoModeRounds: 3,
+      answerChoices: 4,
+      secondsPerRound: 30,
+      secondsPerAllRounds: 0,
+      autoRotation: false,
+      cubeColor: 'gray',
+    };
+
+    let currentSettings = { ...defaultSettings };
+
+    let currentMode = 'standard';
+    let gameRunning = false;
+    let currentRound = 0;
+    let totalRoundsInGame = 0;
+    let score = 0;
+    let maxCubeCountReached = 5;
+    let correctStreakForCubeIncrease = 0;
+    let selectedAnswerIndex = -1;
+    let correctAnswerIndex = -1;
+    let roundTimerInterval = null;
+    let gameTimerInterval = null;
+    let roundStartTime = 0;
+    let gameStartTime = 0;
+    let roundTimeRemaining = 0;
+    let gameTimeRemaining = Infinity;
+    let animationFrameId = null;
+    let gameHistoryEntry = {};
+
+    let mainShapePositions = null;
+    let choices = [];
+
+    let mainSceneElements = null; // { scene, camera, renderer, controls, group, rotationAxis, rotationSpeed }
+    let answerSceneElements = []; // Array of { scene, camera, renderer, controls, group, canvasContainer }
+
+    let colorPerGameSession = null;
+    let colorPerRound = null;
+
+    const colors = {
+      gray: 0x808080, red: 0xff0000, green: 0x00ff00, blue: 0x0000ff,
+      cyan: 0x00ffff, magenta: 0xff00ff, yellow: 0xffff00, orange: 0xffa500
+    };
+
+    function getRandomColor() {
+      const colorKeys = Object.keys(colors);
+      return colors[colorKeys[Math.floor(Math.random() * colorKeys.length)]];
+    }
+
+    function formatTime(seconds) {
+      if (!isFinite(seconds) || seconds < 0) return "--:--";
+      const mins = Math.floor(seconds / 60);
+      const secs = Math.floor(seconds % 60);
+      return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    function loadSettings() {
+      currentSettings.cubeCount = parseInt(localStorage.getItem(settingsNames.cubeCount) ?? defaultSettings.cubeCount);
+      currentSettings.complexity = parseInt(localStorage.getItem(settingsNames.complexity) ?? defaultSettings.complexity);
+      currentSettings.autoModeRounds = parseInt(localStorage.getItem(settingsNames.autoModeRounds) ?? defaultSettings.autoModeRounds);
+      currentSettings.answerChoices = parseInt(localStorage.getItem(settingsNames.answerChoices) ?? defaultSettings.answerChoices);
+      currentSettings.secondsPerRound = parseInt(localStorage.getItem(settingsNames.secondsPerRound) ?? defaultSettings.secondsPerRound);
+      currentSettings.secondsPerAllRounds = parseInt(localStorage.getItem(settingsNames.secondsPerAllRounds) ?? defaultSettings.secondsPerAllRounds);
+      currentSettings.autoRotation = (localStorage.getItem(settingsNames.autoRotation) ?? 'false') === 'true';
+      currentSettings.cubeColor = localStorage.getItem(settingsNames.cubeColor) ?? defaultSettings.cubeColor;
+
+      cubeCountInput.value = currentSettings.cubeCount;
+      complexityInput.value = currentSettings.complexity;
+      autoModeRoundsInput.value = currentSettings.autoModeRounds;
+      answerChoicesInput.value = currentSettings.answerChoices;
+      secondsPerRoundInput.value = currentSettings.secondsPerRound;
+      secondsPerAllRoundsInput.value = currentSettings.secondsPerAllRounds;
+      autoRotationCheckbox.checked = currentSettings.autoRotation;
+      cubeColorSelect.value = currentSettings.cubeColor;
+
+      loadStats();
+    }
+
+    function saveSetting(key, value) {
+      Object.entries(settingsNames).some((kv) => {
+        const kvKey = kv[0], kvValue = kv[1];
+        if (key === kvKey || key === kvValue) {
+          currentSettings[kvKey] = value;
+          localStorage.setItem(kvValue, value);
+          return true;
+        }
+        return false;
+      });
+    }
+
+    function applyDefaultSettings() {
+      Object.keys(defaultSettings).forEach(key => {
+        saveSetting(key, defaultSettings[key]);
+      });
+      loadSettings();
+    }
+
+    function resetAllData() {
+      Object.values(settingsNames).forEach(key => {
+        localStorage.removeItem(key);
+      });
+      loadSettings();
+    }
+
+    function shuffleArray(array, notOriginal = false) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + (1 - notOriginal)));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    function loadStats() {
+      const highScoreData = JSON.parse(localStorage.getItem(settingsNames.highScore) || 'null');
+      const totalCorrect = parseInt(localStorage.getItem(settingsNames.totalCorrect) || '0');
+      const totalPlayed = parseInt(localStorage.getItem(settingsNames.totalPlayed) || '0');
+      const historyData = JSON.parse(localStorage.getItem(settingsNames.history) || '[]');
+
+      if (highScoreData) {
+        highScoreStat.textContent = `${highScoreData.score}/${highScoreData.total}`;
+      } else {
+        highScoreStat.textContent = `N/A`;
+      }
+
+      if (totalPlayed > 0) {
+        const accuracy = ((totalCorrect / totalPlayed) * 100).toFixed(1);
+        avgAccuracyStat.textContent = `${accuracy}% (${totalCorrect}/${totalPlayed})`;
+      } else {
+        avgAccuracyStat.textContent = `N/A`;
+      }
+
+      historyList.innerHTML = '';
+      if (historyData.length > 0) {
+        historyData.slice().reverse().forEach(entryText => {
+          const li = document.createElement('li');
+          li.textContent = entryText;
+          historyList.appendChild(li);
+        });
+      } else {
+        historyList.innerHTML = '<li>No games played yet.</li>';
+      }
+    }
+
+    function getStrDateTime(timestamp = null) {
+      let datetimeValue = null;
+      if (timestamp != null) {
+        datetimeValue = new Date((new Date(timestamp).setHours(new Date(timestamp).getHours() - (new Date().getTimezoneOffset() / 60))));
+      }
+      if (datetimeValue == null) {
+        datetimeValue = new Date((new Date().setHours(new Date().getHours() - (new Date().getTimezoneOffset() / 60))));
+      }
+      return datetimeValue.toISOString().replace('T', ' ').replaceAll('-', '.').slice(0, 19);
+    }
+
+    function saveStats(finalScore, finalTotalRounds) {
+      const currentHighScore = JSON.parse(localStorage.getItem(settingsNames.highScore) || 'null');
+      if (!currentHighScore || (finalScore / finalTotalRounds > currentHighScore.score / currentHighScore.total) || (finalScore / finalTotalRounds === currentHighScore.score / currentHighScore.total && finalScore > currentHighScore.score)) {
+        localStorage.setItem(settingsNames.highScore, JSON.stringify({ score: finalScore, total: finalTotalRounds }));
+      }
+
+      const totalCorrect = parseInt(localStorage.getItem(settingsNames.totalCorrect) || '0') + finalScore;
+      const totalPlayed = parseInt(localStorage.getItem(settingsNames.totalPlayed) || '0') + finalTotalRounds;
+      localStorage.setItem(settingsNames.totalCorrect, totalCorrect);
+      localStorage.setItem(settingsNames.totalPlayed, totalPlayed);
+
+      const historyData = JSON.parse(localStorage.getItem(settingsNames.history) || '[]');
+      const startTime = gameHistoryEntry.startTime;
+      const endTime = new Date();
+      const elapsedTimeMs = endTime - startTime;
+      const elapsedTimeSec = Math.round(elapsedTimeMs / 1000);
+      const accuracy = finalTotalRounds > 0 ? ((finalScore / finalTotalRounds) * 100).toFixed(1) + '%' : 'N/A';
+      const dateStr = getStrDateTime(startTime.getTime());
+      const timeSettings = `Round: ${gameHistoryEntry.secondsPerRound}s, Game: ${gameHistoryEntry.secondsPerAllRounds > 0 ? gameHistoryEntry.secondsPerAllRounds + 's' : '∞'}`;
+      const cubeSetting1 = gameHistoryEntry.initialCubes === gameHistoryEntry.maxCubes ? `${gameHistoryEntry.maxCubes}` : `${gameHistoryEntry.initialCubes}-${gameHistoryEntry.maxCubes}`;
+      const cubeSetting2 = gameHistoryEntry.initialComplexity === gameHistoryEntry.maxComplexity ? `${gameHistoryEntry.maxComplexity}` : `${gameHistoryEntry.initialComplexity}-${gameHistoryEntry.maxComplexity}`;
+      const cubeSettings = `Cubes: ${cubeSetting1}, Complexity: ${cubeSetting2}`;
+      const choiceSetting = `Choices: ${gameHistoryEntry.answerChoices}`;
+
+      const historyEntry = `[${dateStr}] Score: ${finalScore}/${finalTotalRounds} (${accuracy}) | Time: ${elapsedTimeSec}s | ${timeSettings} | ${cubeSettings} | ${choiceSetting}`;
+      historyData.push(historyEntry);
+      localStorage.setItem(settingsNames.history, JSON.stringify(historyData));
+
+      loadStats();
+    }
+
+    function initScene(container) {
+      const scene = new THREE.Scene();
+      const rect = container.getBoundingClientRect();
+      const width = rect.width;
+      const height = rect.height;
+
+      const camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 1000);
+      camera.position.z = 10;
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setSize(width, height);
+      renderer.setPixelRatio(window.devicePixelRatio);
+
+      container.innerHTML = '';
+      container.appendChild(renderer.domElement);
+
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+      scene.add(ambientLight);
+
+      const directionalLight1 = new THREE.DirectionalLight(0xFFFFFF, 0.8);
+      const lightDirection = Math.floor(Math.random() * 8);
+      if (lightDirection === 0) {
+        directionalLight1.position.set(1, 1, 1);
+      }
+      else if (lightDirection === 1) {
+        directionalLight1.position.set(1, 1, -1);
+      }
+      else if (lightDirection === 2) {
+        directionalLight1.position.set(1, -1, 1);
+      }
+      else if (lightDirection === 3) {
+        directionalLight1.position.set(1, -1, -1);
+      }
+      else if (lightDirection === 4) {
+        directionalLight1.position.set(-1, 1, 1);
+      }
+      else if (lightDirection === 5) {
+        directionalLight1.position.set(-1, 1, -1);
+      }
+      else if (lightDirection === 6) {
+        directionalLight1.position.set(-1, -1, 1);
+      }
+      else if (lightDirection === 7) {
+        directionalLight1.position.set(-1, -1, -1);
+      }
+      scene.add(directionalLight1);
+
+      const controls = new OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.1;
+      controls.enableZoom = true;
+      controls.minDistance = 5;
+      controls.maxDistance = 50;
+
+      if (container.id === 'task') {
+        renderer.domElement.addEventListener('dblclick', () => {
+          controls.reset();
+        });
+      }
+
+      return { scene, camera, renderer, controls };
+    }
+
+    function createCubeMesh(colorValue) {
+      const geometry = new THREE.BoxGeometry(1, 1, 1);
+      const material = new THREE.MeshStandardMaterial({
+        color: colorValue
+      });
+      const cubeMesh = new THREE.Mesh(geometry, material);
+      const edges = new THREE.EdgesGeometry(geometry);
+      const lineMaterial = new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 5 });
+      const edgesMesh = new THREE.LineSegments(edges, lineMaterial);
+      edgesMesh.position.copy(cubeMesh.position);
+      return [cubeMesh, edgesMesh];
+    }
+
+    function removeDistantPositions(positions, numPositionsToRemove) {
+      const newPositions = positions.some(v => v.x === 0 && v.y === 0 && v.z === 0) ? [{ x: 0, y: 0, z: 0 }] : [JSON.parse(JSON.stringify(positions[0]))];
+      const occupied = new Set(positions.map(v => `${v.x},${v.y},${v.z}`));
+      const newOccupied = new Set(newPositions.map(v => `${v.x},${v.y},${v.z}`));
+      const adjacentOffsets = [
+        { x: 1, y: 0, z: 0 }, { x: -1, y: 0, z: 0 },
+        { x: 0, y: 1, z: 0 }, { x: 0, y: -1, z: 0 },
+        { x: 0, y: 0, z: 1 }, { x: 0, y: 0, z: -1 },
+      ];
+      while (newPositions.length < positions.length - numPositionsToRemove) {
+        const potentialPositions = [];
+        for (const pos of newPositions) {
+          for (const offset of adjacentOffsets) {
+            const nx = pos.x + offset.x;
+            const ny = pos.y + offset.y;
+            const nz = pos.z + offset.z;
+            const key = `${nx},${ny},${nz}`;
+            if (!newOccupied.has(key) && occupied.has(key)) {
+              potentialPositions.push({ x: nx, y: ny, z: nz });
+            }
+          }
+        }
+        if (potentialPositions.length === 0) {
+          console.warn("Could not find adjacent position, shape may be smaller.");
+          break;
+        }
+        const randomIndex = Math.floor(Math.random() * potentialPositions.length);
+        const newPos = potentialPositions[randomIndex];
+        newPositions.push(newPos);
+        newOccupied.add(`${newPos.x},${newPos.y},${newPos.z}`);
+      }
+      return newPositions;
+    }
+
+    function generateConnectedShape(numCubes, cubesToLeanOn = null) {
+      if (numCubes < 1) return [];
+      const positions = cubesToLeanOn != null ? removeDistantPositions(JSON.parse(JSON.stringify(cubesToLeanOn)), Math.max(1, Math.floor(cubesToLeanOn.length * currentSettings.complexity / 100))) : [{ x: 0, y: 0, z: 0 }];
+      const occupied = new Set(positions.map(v => `${v.x},${v.y},${v.z}`));
+      const adjacentOffsets = [
+        { x: 1, y: 0, z: 0 }, { x: -1, y: 0, z: 0 },
+        { x: 0, y: 1, z: 0 }, { x: 0, y: -1, z: 0 },
+        { x: 0, y: 0, z: 1 }, { x: 0, y: 0, z: -1 },
+      ];
+      while (positions.length < numCubes) {
+        const potentialPositions = [];
+        for (const pos of positions) {
+          for (const offset of adjacentOffsets) {
+            const nx = pos.x + offset.x;
+            const ny = pos.y + offset.y;
+            const nz = pos.z + offset.z;
+            const key = `${nx},${ny},${nz}`;
+            if (!occupied.has(key)) {
+              potentialPositions.push({ x: nx, y: ny, z: nz });
+            }
+          }
+        }
+        if (potentialPositions.length === 0) {
+          console.warn("Could not find adjacent position, shape may be smaller.");
+          break;
+        }
+        const randomIndex = Math.floor(Math.random() * potentialPositions.length);
+        const newPos = potentialPositions[randomIndex];
+        positions.push(newPos);
+        occupied.add(`${newPos.x},${newPos.y},${newPos.z}`);
+      }
+      return positions;
+    }
+
+    function pointToString(p) {
+      return `${p.x},${p.y},${p.z}`;
+    }
+
+    function applyOrientation(p, orientationIndex) {
+      const x = p.x;
+      const y = p.y;
+      const z = p.z;
+      const orientations = [
+        [x, y, z], [-y, x, z], [-x, -y, z], [y, -x, z],
+        [x, -z, y], [-z, -x, y], [-x, z, y], [z, x, y],
+        [x, -y, -z], [-y, -x, -z], [-x, y, -z], [y, x, -z],
+        [x, z, -y], [z, -x, -y], [-x, -z, -y], [-z, x, -y],
+        [-z, y, x], [y, z, x], [z, -y, x], [-y, -z, x],
+        [z, y, -x], [-y, z, -x], [-z, -y, -x], [y, -z, -x]
+      ];
+      if (orientationIndex < 0 || orientationIndex >= 24) {
+        console.error("Invalid orientation index:", orientationIndex);
+        return { x, y, z };
+      }
+      const [nx, ny, nz] = orientations[orientationIndex];
+      return { x: nx, y: ny, z: nz };
+    }
+
+    function getCanonicalForm(positions) {
+      if (!positions || positions.length === 0) {
+        return [];
+      }
+      let minX = positions[0].x, minY = positions[0].y, minZ = positions[0].z;
+      for (let i = 1; i < positions.length; i++) {
+        const p = positions[i];
+        if (p.x < minX) {
+          minX = p.x; minY = p.y; minZ = p.z;
+        } else if (p.x === minX) {
+          if (p.y < minY) {
+            minY = p.y; minZ = p.z;
+          } else if (p.y === minY) {
+            if (p.z < minZ) {
+              minZ = p.z;
+            }
+          }
+        }
+      }
+      const normalizedStrings = positions.map(p =>
+        pointToString({ x: p.x - minX, y: p.y - minY, z: p.z - minZ })
+      );
+      normalizedStrings.sort();
+      return normalizedStrings;
+    }
+
+    function areShapesCongruent(shape1Pos, shape2Pos) {
+      const n = shape1Pos.length;
+      if (n !== shape2Pos.length) {
+        return false;
+      }
+      if (n === 0) {
+        return true;
+      }
+      const canonicalShape1 = getCanonicalForm(shape1Pos);
+      const canonicalString1 = canonicalShape1.join(';');
+      for (let i = 0; i < 24; i++) {
+        const rotatedShape2 = shape2Pos.map(p => applyOrientation(p, i));
+        const canonicalRotatedShape2 = getCanonicalForm(rotatedShape2);
+        const canonicalString2 = canonicalRotatedShape2.join(';');
+        if (canonicalString1 === canonicalString2) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function populateSceneWithShape(scene, shapePositions, colorMode, baseColor) {
+      const group = new THREE.Group();
+      let currentRoundColor = null;
+
+      if (colorMode === 'random-per-round') {
+        colorPerRound = getRandomColor();
+      } else if (colorMode === 'random-per-cubes') {
+        currentRoundColor = getRandomColor();
+      }
+
+      shapePositions.forEach(pos => {
+        let cubeColorValue;
+        switch (colorMode) {
+          case 'random-per-cube':
+            cubeColorValue = getRandomColor();
+            break;
+          case 'random-per-cubes':
+            cubeColorValue = currentRoundColor;
+            break;
+          case 'random-per-round':
+            cubeColorValue = colorPerRound;
+            break;
+          case 'random-per-all-rounds':
+            if (!colorPerGameSession) {
+              colorPerGameSession = getRandomColor();
+            }
+            cubeColorValue = colorPerGameSession;
+            break;
+          default:
+            cubeColorValue = colors[baseColor] || colors.gray;
+        }
+
+        const elems = createCubeMesh(cubeColorValue);
+        elems.forEach((elem) => {
+          elem.position.set(pos.x, pos.y, pos.z);
+          group.add(elem);
+        });
+      });
+
+      const box = new THREE.Box3().setFromObject(group);
+      const center = box.getCenter(new THREE.Vector3());
+      group.position.sub(center);
+
+      scene.add(group);
+      return group;
+    }
+
+    function startGame() {
+      gameRunning = true;
+      gameIntro.style.display = 'none';
+      gameArea.style.display = '';
+
+      currentRound = 0;
+      score = 0;
+      correctStreakForCubeIncrease = 0;
+      selectedAnswerIndex = -1;
+      if (colorPerGameSession) colorPerGameSession = null;
+
+      const isRoundTimeoutMode = currentMode === 'infinite' || currentMode === 'round';
+      const isRoundsTimeoutMode = currentMode === 'infinite' || currentMode === 'rounds';
+      gameHistoryEntry = {
+        startTime: new Date(),
+        initialCubes: currentSettings.cubeCount,
+        initialComplexity: currentSettings.complexity,
+        maxCubes: currentSettings.cubeCount,
+        maxComplexity: currentSettings.complexity,
+        answerChoices: currentSettings.answerChoices,
+        secondsPerRound: isRoundTimeoutMode ? 0 : currentSettings.secondsPerRound,
+        secondsPerAllRounds: isRoundsTimeoutMode ? 0 : currentSettings.secondsPerAllRounds,
+      };
+
+      gameStartTime = Date.now();
+      if (!isRoundsTimeoutMode && currentSettings.secondsPerAllRounds > 0) {
+        gameTimeRemaining = currentSettings.secondsPerAllRounds;
+        updateTimerDisplay();
+        gameTimerInterval = setInterval(updateGameTimer, 1000);
+      } else {
+        gameTimeRemaining = Infinity;
+        updateTimerDisplay();
+      }
+
+      startRound();
+    }
+
+    function stopGame(reason = "manual") {
+      if (!gameRunning) return;
+      gameRunning = false;
+
+      clearInterval(roundTimerInterval);
+      clearInterval(gameTimerInterval);
+      cancelAnimationFrame(animationFrameId);
+      roundTimerInterval = null;
+      gameTimerInterval = null;
+      animationFrameId = null;
+
+      disposeThreeObjects(mainSceneElements);
+      answerSceneElements.forEach(disposeThreeObjects);
+      mainSceneElements = null;
+      answerSceneElements = [];
+      mainShapePositions = null;
+      choices = [];
+
+      taskCanvasContainer.innerHTML = '';
+      answersContainer.innerHTML = '';
+
+      gameArea.style.display = 'none';
+      gameIntro.style.display = 'block';
+      feedbackDisplay.textContent = '';
+
+      if (totalRoundsInGame > 0) {
+        cubeCountInput.value = currentSettings.cubeCount;
+        complexityInput.value = currentSettings.complexity;
+        saveSetting(settingsNames.cubeCount, currentSettings.cubeCount);
+        saveSetting(settingsNames.complexity, currentSettings.complexity);
+        saveStats(score, totalRoundsInGame);
+      } else {
+        loadStats();
+      }
+    }
+
+    function startRound() {
+      currentRound++;
+      totalRoundsInGame = currentRound;
+      selectedAnswerIndex = -1;
+      correctAnswerIndex = -1;
+      choices = [];
+      updateStatusDisplay();
+
+      disposeThreeObjects(mainSceneElements);
+      answerSceneElements.forEach(disposeThreeObjects);
+      mainSceneElements = null;
+      answerSceneElements = [];
+      taskCanvasContainer.innerHTML = '';
+      answersContainer.innerHTML = '';
+
+      mainShapePositions = generateConnectedShape(currentSettings.cubeCount);
+      mainSceneElements = initScene(taskCanvasContainer);
+      mainSceneElements.group = populateSceneWithShape(
+        mainSceneElements.scene,
+        mainShapePositions,
+        currentSettings.cubeColor,
+        currentSettings.cubeColor
+      );
+      mainSceneElements.rotationAxis = new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize();
+      mainSceneElements.rotationSpeed = (Math.PI * 2) / 10 / 60;
+
+      const numChoices = currentSettings.answerChoices;
+      correctAnswerIndex = Math.floor(Math.random() * numChoices);
+
+      for (let i = 0; i < numChoices; i++) {
+        const answerCanvasContainer = document.createElement('div');
+        answerCanvasContainer.classList.add('answer-canvas-container');
+        answerCanvasContainer.dataset.index = i;
+        answersContainer.appendChild(answerCanvasContainer);
+
+        const answerElements = initScene(answerCanvasContainer);
+        let shapeToRender;
+
+        if (i === correctAnswerIndex) {
+          shapeToRender = mainShapePositions;
+        } else {
+          let distractorShape;
+          let attempts = 0;
+          do {
+            distractorShape = generateConnectedShape(currentSettings.cubeCount, mainShapePositions);
+            attempts++;
+          } while ((areShapesCongruent(distractorShape, mainShapePositions) ||
+            choices.some(c => areShapesCongruent(distractorShape, c.shape))) && attempts < 20);
+          if (attempts >= 20) console.warn("Could not generate a unique distractor shape.");
+          shapeToRender = distractorShape;
+        }
+        choices.push({ shape: shapeToRender, elements: answerElements });
+        answerElements.group = populateSceneWithShape(
+          answerElements.scene,
+          shapeToRender,
+          currentSettings.cubeColor,
+          currentSettings.cubeColor
+        );
+        answerElements.group.rotation.x = Math.random() * Math.PI * 2;
+        answerElements.group.rotation.y = Math.random() * Math.PI * 2;
+        answerElements.group.rotation.z = Math.random() * Math.PI * 2;
+        answerSceneElements.push(answerElements);
+        answerCanvasContainer.addEventListener('click', () => selectAnswer(i));
+      }
+
+      feedbackDisplay.textContent = 'Select the matching shape below and click Submit.';
+      feedbackDisplay.className = '';
+      submitAnswerButton.disabled = true;
+      taskCanvasContainer.classList.remove('flash-green', 'flash-red');
+      roundStartTime = Date.now();
+
+      const isRoundTimeoutMode = currentMode === 'infinite' || currentMode === 'round';
+      if (!isRoundTimeoutMode && currentSettings.secondsPerRound > 0) {
+        roundTimeRemaining = currentSettings.secondsPerRound;
+        updateTimerDisplay();
+        roundTimerInterval = setInterval(updateRoundTimer, 1000);
+      } else {
+        roundTimeRemaining = Infinity;
+        updateTimerDisplay();
+      }
+
+      updateView();
+      if (animationFrameId === null) {
+        animate();
+      }
+    }
+
+    function selectAnswer(index) {
+      if (!gameRunning) return;
+      if (selectedAnswerIndex !== -1) {
+        const prevSelected = answersContainer.querySelector(`[data-index="${selectedAnswerIndex}"]`);
+        if (prevSelected) prevSelected.classList.remove('selected');
+      }
+      selectedAnswerIndex = index;
+      const currentSelected = answersContainer.querySelector(`[data-index="${selectedAnswerIndex}"]`);
+      if (currentSelected) currentSelected.classList.add('selected');
+      submitAnswerButton.disabled = false;
+    }
+
+    function handleSubmitAnswer() {
+      if (selectedAnswerIndex === -1 || !gameRunning) return;
+      const feedbackRect = feedbackDisplay.getBoundingClientRect();
+      window.scrollTo(feedbackRect.x, feedbackRect.y);
+      clearInterval(roundTimerInterval);
+      roundTimerInterval = null;
+      submitAnswerButton.disabled = true;
+      const targetShape = mainShapePositions;
+      const selectedShapeData = choices[selectedAnswerIndex];
+      if (!targetShape || !selectedShapeData || !selectedShapeData.shape) {
+        console.error("Shape data missing for comparison!");
+        handleIncorrectAnswer(); // Treat as incorrect if data is missing
+        return;
+      }
+      const selectedShape = selectedShapeData.shape;
+      const isStructurallyCorrect = areShapesCongruent(targetShape, selectedShape);
+      if (isStructurallyCorrect) {
+        handleCorrectAnswer();
+      } else {
+        handleIncorrectAnswer(selectedAnswerIndex);
+      }
+      gameHistoryEntry.maxCubes = Math.max(gameHistoryEntry.maxCubes, currentSettings.cubeCount);
+      gameHistoryEntry.maxComplexity = Math.max(gameHistoryEntry.maxComplexity, currentSettings.complexity);
+    }
+
+    function handleCorrectAnswer() {
+      score++;
+      correctStreakForCubeIncrease++;
+      feedbackDisplay.textContent = `Correct!`;
+      feedbackDisplay.className = 'feedback-correct';
+      taskCanvasContainer.classList.add('flash-green');
+      updateStatusDisplay();
+      if (currentSettings.autoModeRounds > 0 && correctStreakForCubeIncrease >= currentSettings.autoModeRounds) {
+        console.log(currentSettings.complexity);
+        if (Math.floor(currentSettings.cubeCount * currentSettings.complexity / 100) >= currentSettings.cubeCount) {
+          currentSettings.complexity = 0;
+          const maxCubes = parseInt(cubeCountInput.max);
+          if (currentSettings.cubeCount < maxCubes) {
+            currentSettings.cubeCount++;
+            feedbackDisplay.textContent += ` Cube count increased to ${currentSettings.cubeCount}!`;
+            updateStatusDisplay();
+          }
+          correctStreakForCubeIncrease = 0;
+        }
+        else {
+          currentSettings.complexity = Math.ceil((Math.floor(currentSettings.cubeCount * currentSettings.complexity / 100) + 1) * 100 / (currentSettings.cubeCount));
+        }
+      }
+      setTimeout(startNextRoundOrEndGame, 1000);
+    }
+
+    function handleIncorrectAnswer(selectedAnswerIndex = -1) {
+      correctStreakForCubeIncrease = 0;
+      feedbackDisplay.textContent = `Incorrect. The correct answer is highlighted. Next round in 3 seconds...`;
+      feedbackDisplay.className = 'feedback-incorrect';
+      taskCanvasContainer.classList.add('flash-red');
+      const correctAnswerCanvas = answersContainer.querySelector(`[data-index="${correctAnswerIndex}"]`);
+      if (correctAnswerCanvas) {
+        correctAnswerCanvas.classList.add('highlight-correct');
+        const canvasRect = correctAnswerCanvas.getBoundingClientRect();
+        window.scrollTo(canvasRect.x, canvasRect.y);
+      }
+      if (selectedAnswerIndex >= 0) {
+        const selected = answersContainer.querySelector(`[data-index="${selectedAnswerIndex}"]`);
+        if (selected) selected.classList.add('highlight-incorrect');
+      }
+      setTimeout(startNextRoundOrEndGame, 3000);
+    }
+
+    function handleTimeout() {
+      correctStreakForCubeIncrease = 0;
+      submitAnswerButton.disabled = true;
+      feedbackDisplay.textContent = `Time's up! The correct answer is shown. Next round in 3 seconds...`;
+      feedbackDisplay.className = 'feedback-timeout';
+      const correctAnswerCanvas = answersContainer.querySelector(`[data-index="${correctAnswerIndex}"]`);
+      if (correctAnswerCanvas) correctAnswerCanvas.classList.add('highlight-correct');
+      setTimeout(startNextRoundOrEndGame, 3000);
+    }
+
+    function startNextRoundOrEndGame() {
+      if (currentSettings.secondsPerAllRounds > 0 && gameTimeRemaining <= 0) {
+        stopGame("game_timeout");
+      } else {
+        startRound();
+      }
+    }
+
+    function updateRoundTimer() {
+      roundTimeRemaining--;
+      updateTimerDisplay();
+      if (roundTimeRemaining <= 0) {
+        clearInterval(roundTimerInterval);
+        roundTimerInterval = null;
+        handleTimeout();
+      }
+    }
+
+    function updateGameTimer() {
+      gameTimeRemaining--;
+      updateTimerDisplay();
+      if (gameTimeRemaining <= 0) {
+        clearInterval(gameTimerInterval);
+        gameTimerInterval = null;
+      }
+    }
+
+    function updateStatusDisplay() {
+      statusDisplay.textContent = `Score: ${score}/${currentRound} | Cubes: ${currentSettings.cubeCount} | Complexity: ${currentSettings.complexity}`;
+    }
+
+    function updateTimerDisplay() {
+      const roundTimeStr = formatTime(roundTimeRemaining);
+      const gameTimeStr = formatTime(gameTimeRemaining);
+      timeDisplay.textContent = `Round: ${roundTimeStr} | Game: ${gameTimeStr}`;
+    }
+
+    function animate() {
+      animationFrameId = requestAnimationFrame(animate);
+      const needsRender = [];
+      if (mainSceneElements && mainSceneElements.controls) {
+        mainSceneElements.controls.update();
+        if (currentSettings.autoRotation && gameRunning) {
+          mainSceneElements.group.rotateOnWorldAxis(mainSceneElements.rotationAxis, mainSceneElements.rotationSpeed);
+        }
+        needsRender.push(mainSceneElements);
+      }
+      answerSceneElements.forEach(elements => {
+        if (elements && elements.controls) {
+          elements.controls.update();
+          if (currentSettings.autoRotation && gameRunning) {
+            elements.group.rotateOnWorldAxis(mainSceneElements.rotationAxis, mainSceneElements.rotationSpeed);
+          }
+          needsRender.push(elements);
+        }
+      });
+      needsRender.forEach(elements => {
+        if (elements && elements.renderer && elements.scene && elements.camera) {
+          elements.renderer.render(elements.scene, elements.camera);
+        }
+      });
+    }
+
+    function disposeThreeObjects(elements) {
+      if (!elements) return;
+      if (elements.group) {
+        elements.group.traverse(object => {
+          if (object.isMesh) {
+            if (object.geometry) object.geometry.dispose();
+            if (object.material) {
+              if (Array.isArray(object.material)) {
+                object.material.forEach(material => material.dispose());
+              } else {
+                object.material.dispose();
+              }
+            }
+          }
+        });
+        if (elements.scene) {
+          elements.scene.remove(elements.group);
+        }
+      }
+      if (elements.controls) {
+        elements.controls.dispose();
+      }
+      if (elements.renderer) {
+        elements.renderer.dispose();
+        if (elements.renderer.domElement && elements.renderer.domElement.parentElement) {
+          elements.renderer.domElement.parentElement.removeChild(elements.renderer.domElement);
+        }
+      }
+      if (elements.scene) {
+        while (elements.scene.children.length > 0) {
+          elements.scene.remove(elements.scene.children[0]);
+        }
+      }
+    }
+
+    function updateView() {
+      if (!gameRunning) return;
+      if (mainSceneElements) {
+        const rect = taskCanvasContainer.getBoundingClientRect();
+        const width = rect.width;
+        const height = rect.height;
+        mainSceneElements.camera.aspect = width / height;
+        mainSceneElements.camera.updateProjectionMatrix();
+        mainSceneElements.renderer.setSize(width, height);
+      }
+      answerSceneElements.forEach(elements => {
+        if (elements) {
+          const container = elements.renderer.domElement.parentElement;
+          if (container) {
+            const rect = container.getBoundingClientRect();
+            const width = rect.width;
+            const height = rect.height;
+            mainSceneElements.camera.aspect = width / height;
+            elements.camera.updateProjectionMatrix();
+            elements.renderer.setSize(width, height);
+          }
+        }
+      });
+    }
+
+    startButtons.forEach((button) => {
+      const mode = button.getAttribute('mode') ?? 'standard';
+      button.addEventListener('click', () => {
+        currentMode = mode;
+        startGame();
+      });
+    });
+
+    stopButton.addEventListener('click', () => stopGame("manual"));
+    submitAnswerButton.addEventListener('click', handleSubmitAnswer);
+    defaultSettingsButton.addEventListener('click', () => {
+      if (confirm("Are you sure you want to reset settings? This cannot be undone.")) {
+        applyDefaultSettings();
+      }
+    });
+    resetAllButton.addEventListener('click', () => {
+      if (confirm("Are you sure you want to reset all settings, statistics, and history? This cannot be undone.")) {
+        resetAllData();
+      }
+    });
+
+    cubeCountInput.addEventListener('change', (e) => saveSetting(settingsNames.cubeCount, Math.max(3, parseInt(e.target.value))));
+    complexityInput.addEventListener('change', (e) => saveSetting(settingsNames.complexity, Math.max(0, parseInt(e.target.value))));
+    autoModeRoundsInput.addEventListener('change', (e) => saveSetting(settingsNames.autoModeRounds, Math.max(0, parseInt(e.target.value))));
+    answerChoicesInput.addEventListener('change', (e) => saveSetting(settingsNames.answerChoices, Math.max(0, parseInt(e.target.value))));
+    secondsPerRoundInput.addEventListener('change', (e) => saveSetting(settingsNames.secondsPerRound, Math.max(0, parseInt(e.target.value))));
+    secondsPerAllRoundsInput.addEventListener('change', (e) => saveSetting(settingsNames.secondsPerAllRounds, Math.max(0, parseInt(e.target.value))));
+    autoRotationCheckbox.addEventListener('change', (e) => saveSetting(settingsNames.autoRotation, e.target.checked));
+    cubeColorSelect.addEventListener('change', (e) => saveSetting(settingsNames.cubeColor, e.target.value));
+
+    window.addEventListener('resize', () => {
+      updateView();
+    }, false);
+
+    loadSettings();
+
+  </script>
+</body>
+
+</html>
