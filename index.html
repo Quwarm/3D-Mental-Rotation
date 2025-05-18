@@ -5,10 +5,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>3D Mental Rotation Training</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin="anonymous">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"
-    rel="stylesheet">
   <style>
     * {
       margin: 0;
@@ -35,7 +31,6 @@
     }
 
     body {
-      padding: 15px;
       text-align: center;
       font-family: Arial, sans-serif;
       background-color: var(--bg-dark);
@@ -50,7 +45,7 @@
     }
 
     .container {
-      padding: 25px;
+      padding: 10px;
       max-width: 1100px;
       width: 100%;
       margin: 0 auto;
@@ -110,11 +105,12 @@
       color: var(--text-secondary);
     }
 
-    label > span {
+    label>span {
       display: block;
     }
 
-    select, input {
+    select,
+    input {
       vertical-align: middle;
       text-align: center;
       width: 100%;
@@ -159,7 +155,7 @@
       cursor: not-allowed;
       opacity: 0.7;
     }
-    
+
     .button-group button {
       display: inline-block;
     }
@@ -192,14 +188,15 @@
       background-color: var(--accent-hover);
     }
 
-    #defaultSettingsButton, #resetAllButton {
+    #defaultSettingsButton,
+    #resetStatsButton {
       background-color: var(--bg-light);
       color: var(--text-secondary);
       border: 1px solid var(--border-color);
     }
 
     #defaultSettingsButton:hover:not(:disabled),
-    #resetAllButton:hover:not(:disabled) {
+    #resetStatsButton:hover:not(:disabled) {
       background-color: #454545;
       border-color: #555;
     }
@@ -241,12 +238,13 @@
       border-radius: var(--border-radius);
     }
 
-    #game-top-bar > div,
-    #game-top-bar > button {
+    #game-top-bar>div,
+    #game-top-bar>button {
       display: block;
     }
 
-    #status, #time {
+    #status,
+    #time {
       color: var(--text-primary);
     }
 
@@ -289,7 +287,7 @@
     }
 
     .answer-canvas-container.selected {
-      border-color: var(--success-color);
+      border-color: var(--accent-color);
       border-width: 3px;
     }
 
@@ -337,7 +335,7 @@
       h1 {
         font-size: 1.4em;
       }
-      
+
       #task {
         width: 100%;
       }
@@ -361,17 +359,12 @@
     <div id="gameIntro">
 
       <div class="with-rounded-border">
-        <h2>Training</h2>
+        <h2>Start</h2>
         <button class="startButton" mode="standard">Standard Mode</button>
         <button class="startButton" mode="rounds">Round Timeout Mode</button>
         <button class="startButton" mode="round">Rounds Timeout Mode</button>
         <button class="startButton" mode="infinite">Infinite Mode</button>
       </div>
-
-      <!-- <div class="with-rounded-border">
-        <h3>Testing</h3>
-        <button class="startButton" mode="testing">Test</button>
-      </div> -->
 
       <div id="settings" class="with-rounded-border">
         <h2>Settings</h2>
@@ -422,8 +415,8 @@
         </label>
 
         <div class="button-group">
-          <button id="defaultSettingsButton">Load Default Settings</button>
-          <button id="resetAllButton">Reset Stats & Settings</button>
+          <button id="defaultSettingsButton">Default Settings</button>
+          <button id="resetStatsButton">Reset Stats</button>
         </div>
 
       </div>
@@ -475,7 +468,7 @@
     const startButtons = [...(document.getElementsByClassName('startButton') ?? [])];
     const stopButton = document.getElementById('stopButton');
     const defaultSettingsButton = document.getElementById('defaultSettingsButton');
-    const resetAllButton = document.getElementById('resetAllButton');
+    const resetStatsButton = document.getElementById('resetStatsButton');
     const cubeCountInput = document.getElementById('cubeCount');
     const complexityInput = document.getElementById('complexity');
     const autoModeRoundsInput = document.getElementById('autoModeRounds');
@@ -517,7 +510,7 @@
       autoModeRounds: 3,
       answerChoices: 4,
       secondsPerRound: 30,
-      secondsPerAllRounds: 0,
+      secondsPerAllRounds: 300,
       autoRotation: false,
       cubeColor: 'gray',
     };
@@ -541,6 +534,10 @@
     let gameTimeRemaining = Infinity;
     let animationFrameId = null;
     let gameHistoryEntry = {};
+
+    let isPausedForIncorrectAnswerFeedback = false;
+    let incorrectAnswerPauseStartTime = 0;
+    let totalGamePauseDuration = 0;
 
     let mainShapePositions = null;
     let choices = [];
@@ -609,10 +606,11 @@
       loadSettings();
     }
 
-    function resetAllData() {
-      Object.values(settingsNames).forEach(key => {
-        localStorage.removeItem(key);
-      });
+    function resetStatsData() {
+      localStorage.removeItem(settingsNames.history);
+      localStorage.removeItem(settingsNames.totalCorrect);
+      localStorage.removeItem(settingsNames.totalPlayed);
+      localStorage.removeItem(settingsNames.highScore);
       loadSettings();
     }
 
@@ -672,16 +670,18 @@
         localStorage.setItem(settingsNames.highScore, JSON.stringify({ score: finalScore, total: finalTotalRounds }));
       }
 
-      const totalCorrect = parseInt(localStorage.getItem(settingsNames.totalCorrect) || '0') + finalScore;
-      const totalPlayed = parseInt(localStorage.getItem(settingsNames.totalPlayed) || '0') + finalTotalRounds;
-      localStorage.setItem(settingsNames.totalCorrect, totalCorrect);
-      localStorage.setItem(settingsNames.totalPlayed, totalPlayed);
+      const totalCorrectVal = parseInt(localStorage.getItem(settingsNames.totalCorrect) || '0') + finalScore;
+      const totalPlayedVal = parseInt(localStorage.getItem(settingsNames.totalPlayed) || '0') + finalTotalRounds;
+      localStorage.setItem(settingsNames.totalCorrect, totalCorrectVal);
+      localStorage.setItem(settingsNames.totalPlayed, totalPlayedVal);
 
       const historyData = JSON.parse(localStorage.getItem(settingsNames.history) || '[]');
       const startTime = gameHistoryEntry.startTime;
       const endTime = new Date();
-      const elapsedTimeMs = endTime - startTime;
-      const elapsedTimeSec = Math.round(elapsedTimeMs / 1000);
+      const grossElapsedTimeMs = endTime.getTime() - startTime.getTime();
+      const netElapsedTimeMs = grossElapsedTimeMs - totalGamePauseDuration;
+      const elapsedTimeSec = Math.max(0, Math.round(netElapsedTimeMs / 1000));
+
       const accuracy = finalTotalRounds > 0 ? ((finalScore / finalTotalRounds) * 100).toFixed(1) + '%' : 'N/A';
       const dateStr = getStrDateTime(startTime.getTime());
       const timeSettings = `Round: ${gameHistoryEntry.secondsPerRound}s, Game: ${gameHistoryEntry.secondsPerAllRounds > 0 ? gameHistoryEntry.secondsPerAllRounds + 's' : '∞'}`;
@@ -809,7 +809,7 @@
 
     function generateConnectedShape(numCubes, cubesToLeanOn = null) {
       if (numCubes < 1) return [];
-      const positions = cubesToLeanOn != null ? removeDistantPositions(JSON.parse(JSON.stringify(cubesToLeanOn)), Math.max(1, Math.floor(cubesToLeanOn.length * currentSettings.complexity / 100))) : [{ x: 0, y: 0, z: 0 }];
+      const positions = cubesToLeanOn != null ? removeDistantPositions(JSON.parse(JSON.stringify(cubesToLeanOn)), Math.max(1, Math.floor(cubesToLeanOn.length * (100 - currentSettings.complexity) / 100))) : [{ x: 0, y: 0, z: 0 }];
       const occupied = new Set(positions.map(v => `${v.x},${v.y},${v.z}`));
       const adjacentOffsets = [
         { x: 1, y: 0, z: 0 }, { x: -1, y: 0, z: 0 },
@@ -914,12 +914,12 @@
 
     function populateSceneWithShape(scene, shapePositions, colorMode, baseColor) {
       const group = new THREE.Group();
-      let currentRoundColor = null;
+      let currentShapeColor = null;
 
-      if (colorMode === 'random-per-round') {
+      if (colorMode === 'random-per-round' && colorPerRound == null) {
         colorPerRound = getRandomColor();
       } else if (colorMode === 'random-per-cubes') {
-        currentRoundColor = getRandomColor();
+        currentShapeColor = getRandomColor();
       }
 
       shapePositions.forEach(pos => {
@@ -929,7 +929,7 @@
             cubeColorValue = getRandomColor();
             break;
           case 'random-per-cubes':
-            cubeColorValue = currentRoundColor;
+            cubeColorValue = currentShapeColor;
             break;
           case 'random-per-round':
             cubeColorValue = colorPerRound;
@@ -968,7 +968,9 @@
       score = 0;
       correctStreakForCubeIncrease = 0;
       selectedAnswerIndex = -1;
-      if (colorPerGameSession) colorPerGameSession = null;
+      colorPerGameSession = null;
+      isPausedForIncorrectAnswerFeedback = false;
+      totalGamePauseDuration = 0;
 
       const isRoundTimeoutMode = currentMode === 'infinite' || currentMode === 'round';
       const isRoundsTimeoutMode = currentMode === 'infinite' || currentMode === 'rounds';
@@ -987,7 +989,6 @@
       if (!isRoundsTimeoutMode && currentSettings.secondsPerAllRounds > 0) {
         gameTimeRemaining = currentSettings.secondsPerAllRounds;
         updateTimerDisplay();
-        gameTimerInterval = setInterval(updateGameTimer, 1000);
       } else {
         gameTimeRemaining = Infinity;
         updateTimerDisplay();
@@ -1000,12 +1001,17 @@
       if (!gameRunning) return;
       gameRunning = false;
 
+      if (reason === 'manual' && selectedAnswerIndex === -1) {
+        totalRoundsInGame = Math.max(0, totalRoundsInGame - 1);
+      }
+
       clearInterval(roundTimerInterval);
       clearInterval(gameTimerInterval);
       cancelAnimationFrame(animationFrameId);
       roundTimerInterval = null;
       gameTimerInterval = null;
       animationFrameId = null;
+      isPausedForIncorrectAnswerFeedback = false;
 
       disposeThreeObjects(mainSceneElements);
       answerSceneElements.forEach(disposeThreeObjects);
@@ -1033,11 +1039,14 @@
     }
 
     function startRound() {
+      if (!gameRunning) return;
+
       currentRound++;
       totalRoundsInGame = currentRound;
       selectedAnswerIndex = -1;
       correctAnswerIndex = -1;
       choices = [];
+      colorPerRound = null;
       updateStatusDisplay();
 
       disposeThreeObjects(mainSceneElements);
@@ -1106,12 +1115,27 @@
       const isRoundTimeoutMode = currentMode === 'infinite' || currentMode === 'round';
       if (!isRoundTimeoutMode && currentSettings.secondsPerRound > 0) {
         roundTimeRemaining = currentSettings.secondsPerRound;
-        updateTimerDisplay();
+        if (roundTimerInterval) clearInterval(roundTimerInterval);
         roundTimerInterval = setInterval(updateRoundTimer, 1000);
       } else {
         roundTimeRemaining = Infinity;
-        updateTimerDisplay();
       }
+
+      const isRoundsTimeoutMode = currentMode === 'infinite' || currentMode === 'rounds';
+      if (!isRoundsTimeoutMode && currentSettings.secondsPerAllRounds > 0) {
+        if (!gameTimerInterval) {
+          const grossElapsedMs = Date.now() - gameStartTime;
+          const netElapsedMs = grossElapsedMs - totalGamePauseDuration;
+          const netElapsedSeconds = netElapsedMs / 1000;
+          gameTimeRemaining = Math.max(0, currentSettings.secondsPerAllRounds - netElapsedSeconds);
+
+          if (gameTimeRemaining > 0) {
+            if (gameTimerInterval) clearInterval(gameTimerInterval);
+            gameTimerInterval = setInterval(updateGameTimer, 1000);
+          }
+        }
+      }
+      updateTimerDisplay();
 
       updateView();
       if (animationFrameId === null) {
@@ -1120,7 +1144,7 @@
     }
 
     function selectAnswer(index) {
-      if (!gameRunning) return;
+      if (!gameRunning || isPausedForIncorrectAnswerFeedback) return;
       if (selectedAnswerIndex !== -1) {
         const prevSelected = answersContainer.querySelector(`[data-index="${selectedAnswerIndex}"]`);
         if (prevSelected) prevSelected.classList.remove('selected');
@@ -1132,17 +1156,52 @@
     }
 
     function handleSubmitAnswer() {
-      if (selectedAnswerIndex === -1 || !gameRunning) return;
+      if (!gameRunning) return;
+
+      if (isPausedForIncorrectAnswerFeedback) {
+        const pauseDuration = Date.now() - incorrectAnswerPauseStartTime;
+        totalGamePauseDuration += pauseDuration;
+
+        isPausedForIncorrectAnswerFeedback = false;
+
+        feedbackDisplay.textContent = 'Select the matching shape below and click Submit.';
+        feedbackDisplay.className = '';
+        taskCanvasContainer.classList.remove('flash-red', 'flash-green');
+
+        const highlightedCorrect = answersContainer.querySelector('.highlight-correct');
+        if (highlightedCorrect) highlightedCorrect.classList.remove('highlight-correct');
+        const highlightedIncorrect = answersContainer.querySelector('.highlight-incorrect');
+        if (highlightedIncorrect) highlightedIncorrect.classList.remove('highlight-incorrect');
+
+        if (selectedAnswerIndex !== -1) {
+          const prevSelected = answersContainer.querySelector(`[data-index="${selectedAnswerIndex}"]`);
+          if (prevSelected) {
+            prevSelected.classList.remove('selected');
+            prevSelected.classList.remove('highlight-incorrect');
+          }
+          selectedAnswerIndex = -1;
+        }
+        submitAnswerButton.disabled = true;
+
+        startNextRoundOrEndGame();
+        return;
+      }
+
+      if (selectedAnswerIndex === -1) return;
+
       const feedbackRect = feedbackDisplay.getBoundingClientRect();
       window.scrollTo(feedbackRect.x, feedbackRect.y);
+
       clearInterval(roundTimerInterval);
       roundTimerInterval = null;
+
       submitAnswerButton.disabled = true;
+
       const targetShape = mainShapePositions;
       const selectedShapeData = choices[selectedAnswerIndex];
       if (!targetShape || !selectedShapeData || !selectedShapeData.shape) {
         console.error("Shape data missing for comparison!");
-        handleIncorrectAnswer(); // Treat as incorrect if data is missing
+        handleIncorrectAnswer();
         return;
       }
       const selectedShape = selectedShapeData.shape;
@@ -1164,7 +1223,6 @@
       taskCanvasContainer.classList.add('flash-green');
       updateStatusDisplay();
       if (currentSettings.autoModeRounds > 0 && correctStreakForCubeIncrease >= currentSettings.autoModeRounds) {
-        console.log(currentSettings.complexity);
         if (Math.floor(currentSettings.cubeCount * currentSettings.complexity / 100) >= currentSettings.cubeCount) {
           currentSettings.complexity = 0;
           const maxCubes = parseInt(cubeCountInput.max);
@@ -1182,58 +1240,94 @@
       setTimeout(startNextRoundOrEndGame, 1000);
     }
 
-    function handleIncorrectAnswer(selectedAnswerIndex = -1) {
+    function handleIncorrectAnswer(selectedIndex = -1) {
+      isPausedForIncorrectAnswerFeedback = true;
+      incorrectAnswerPauseStartTime = Date.now();
+
+      clearInterval(roundTimerInterval);
+      clearInterval(gameTimerInterval);
+      roundTimerInterval = null;
+      gameTimerInterval = null;
+
+      submitAnswerButton.disabled = false;
+
       correctStreakForCubeIncrease = 0;
-      feedbackDisplay.textContent = `Incorrect. The correct answer is highlighted. Next round in 3 seconds...`;
+      feedbackDisplay.textContent = `Incorrect. The correct answer is highlighted. Click "Submit" to continue.`;
       feedbackDisplay.className = 'feedback-incorrect';
       taskCanvasContainer.classList.add('flash-red');
+
       const correctAnswerCanvas = answersContainer.querySelector(`[data-index="${correctAnswerIndex}"]`);
       if (correctAnswerCanvas) {
         correctAnswerCanvas.classList.add('highlight-correct');
         const canvasRect = correctAnswerCanvas.getBoundingClientRect();
         window.scrollTo(canvasRect.x, canvasRect.y);
       }
-      if (selectedAnswerIndex >= 0) {
-        const selected = answersContainer.querySelector(`[data-index="${selectedAnswerIndex}"]`);
-        if (selected) selected.classList.add('highlight-incorrect');
+      if (selectedIndex >= 0) {
+        const selectedContainer = answersContainer.querySelector(`[data-index="${selectedIndex}"]`);
+        if (selectedContainer) selectedContainer.classList.add('highlight-incorrect');
       }
-      setTimeout(startNextRoundOrEndGame, 3000);
     }
 
     function handleTimeout() {
+      isPausedForIncorrectAnswerFeedback = true;
+      incorrectAnswerPauseStartTime = Date.now();
+
+      clearInterval(roundTimerInterval);
+      clearInterval(gameTimerInterval);
+      roundTimerInterval = null;
+      gameTimerInterval = null;
+      submitAnswerButton.disabled = false;
+
       correctStreakForCubeIncrease = 0;
-      submitAnswerButton.disabled = true;
-      feedbackDisplay.textContent = `Time's up! The correct answer is shown. Next round in 3 seconds...`;
+      feedbackDisplay.textContent = `Time's up! The correct answer is shown. Click "Submit" to continue.`;
       feedbackDisplay.className = 'feedback-timeout';
       const correctAnswerCanvas = answersContainer.querySelector(`[data-index="${correctAnswerIndex}"]`);
       if (correctAnswerCanvas) correctAnswerCanvas.classList.add('highlight-correct');
-      setTimeout(startNextRoundOrEndGame, 3000);
     }
 
     function startNextRoundOrEndGame() {
-      if (currentSettings.secondsPerAllRounds > 0 && gameTimeRemaining <= 0) {
-        stopGame("game_timeout");
-      } else {
-        startRound();
+      if (!gameRunning) return;
+
+      const isRoundsTimeoutMode = currentMode === 'infinite' || currentMode === 'rounds';
+      if (!isRoundsTimeoutMode && currentSettings.secondsPerAllRounds > 0) {
+        const grossElapsedMs = Date.now() - gameStartTime;
+        const netElapsedMs = grossElapsedMs - totalGamePauseDuration;
+
+        if (netElapsedMs / 1000 >= currentSettings.secondsPerAllRounds) {
+          stopGame("game_timeout");
+          return;
+        }
       }
+      startRound();
     }
 
     function updateRoundTimer() {
+      if (isPausedForIncorrectAnswerFeedback) return;
       roundTimeRemaining--;
       updateTimerDisplay();
       if (roundTimeRemaining <= 0) {
-        clearInterval(roundTimerInterval);
-        roundTimerInterval = null;
         handleTimeout();
       }
     }
 
     function updateGameTimer() {
-      gameTimeRemaining--;
+      if (isPausedForIncorrectAnswerFeedback) return;
+
+      if (gameStartTime === 0 || currentSettings.secondsPerAllRounds <= 0 || currentMode === 'infinite' || currentMode === 'rounds') {
+        gameTimeRemaining = Infinity;
+      } else {
+        const grossElapsedMs = Date.now() - gameStartTime;
+        const netElapsedMs = grossElapsedMs - totalGamePauseDuration;
+        const netElapsedSeconds = netElapsedMs / 1000;
+        gameTimeRemaining = Math.max(0, currentSettings.secondsPerAllRounds - netElapsedSeconds);
+      }
       updateTimerDisplay();
-      if (gameTimeRemaining <= 0) {
-        clearInterval(gameTimerInterval);
-        gameTimerInterval = null;
+
+      if (gameTimeRemaining <= 0 && (currentMode !== 'infinite' && currentMode !== 'rounds') && currentSettings.secondsPerAllRounds > 0) {
+        if (gameTimerInterval) {
+          clearInterval(gameTimerInterval);
+          gameTimerInterval = null;
+        }
       }
     }
 
@@ -1252,7 +1346,7 @@
       const needsRender = [];
       if (mainSceneElements && mainSceneElements.controls) {
         mainSceneElements.controls.update();
-        if (currentSettings.autoRotation && gameRunning) {
+        if (currentSettings.autoRotation && gameRunning && !isPausedForIncorrectAnswerFeedback) {
           mainSceneElements.group.rotateOnWorldAxis(mainSceneElements.rotationAxis, mainSceneElements.rotationSpeed);
         }
         needsRender.push(mainSceneElements);
@@ -1260,8 +1354,8 @@
       answerSceneElements.forEach(elements => {
         if (elements && elements.controls) {
           elements.controls.update();
-          if (currentSettings.autoRotation && gameRunning) {
-            elements.group.rotateOnWorldAxis(mainSceneElements.rotationAxis, mainSceneElements.rotationSpeed);
+          if (currentSettings.autoRotation && gameRunning && !isPausedForIncorrectAnswerFeedback) {
+            elements.group.rotateOnWorldAxis(mainSceneElements.rotationAxis, mainSceneElements.rotationSpeed * 0.8);
           }
           needsRender.push(elements);
         }
@@ -1309,7 +1403,7 @@
     }
 
     function updateView() {
-      if (!gameRunning) return;
+      if (!gameRunning && !isPausedForIncorrectAnswerFeedback) return;
       if (mainSceneElements) {
         const rect = taskCanvasContainer.getBoundingClientRect();
         const width = rect.width;
@@ -1325,7 +1419,7 @@
             const rect = container.getBoundingClientRect();
             const width = rect.width;
             const height = rect.height;
-            mainSceneElements.camera.aspect = width / height;
+            elements.camera.aspect = width / height;
             elements.camera.updateProjectionMatrix();
             elements.renderer.setSize(width, height);
           }
@@ -1348,9 +1442,9 @@
         applyDefaultSettings();
       }
     });
-    resetAllButton.addEventListener('click', () => {
-      if (confirm("Are you sure you want to reset all settings, statistics, and history? This cannot be undone.")) {
-        resetAllData();
+    resetStatsButton.addEventListener('click', () => {
+      if (confirm("Are you sure you want to reset statistics and history? This cannot be undone.")) {
+        resetStatsData();
       }
     });
 
